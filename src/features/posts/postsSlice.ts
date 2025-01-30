@@ -1,5 +1,6 @@
 import { createSlice, nanoid, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store'
+import { sub } from 'date-fns'
 
 // Define a TS type for the data
 export interface Post {
@@ -7,14 +8,27 @@ export interface Post {
   title: string
   content: string
   user: string
+  date: string
 }
 
 // Constructs a type by picking the set of properties
 type PostUpdate = Pick<Post, 'id' | 'title' | 'content'>
 
 const initialState: Post[] = [
-  { id: '1', title: 'First Post!', content: 'Hello!', user: '0' },
-  { id: '2', title: 'Second Post', content: 'More text', user: '2' },
+  {
+    id: '1',
+    title: 'First Post!',
+    content: 'Hello!',
+    user: '0',
+    date: sub(new Date(), { minutes: 10 }).toISOString(),
+  },
+  {
+    id: '2',
+    title: 'Second Post',
+    content: 'More text',
+    user: '2',
+    date: sub(new Date(), { minutes: 5 }).toISOString(),
+  },
 ]
 
 // posts slice with initial state
@@ -29,7 +43,7 @@ const postsSlice = createSlice({
       // can take multiple arguments, generate random values like unique IDs, must return payload object
       prepare(title: string, content: string, userId: string) {
         return {
-          payload: { id: nanoid(), title, content, user: userId },
+          payload: { id: nanoid(), date: new Date().toISOString(), title, content, user: userId },
         }
       },
     },

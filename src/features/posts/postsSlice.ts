@@ -1,6 +1,7 @@
 import { createSlice, nanoid, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store'
 import { sub } from 'date-fns'
+import { userLoggedOut } from '../auth/authSlice'
 
 export interface Reactions {
   thumbsUp: number
@@ -88,6 +89,13 @@ const postsSlice = createSlice({
         existingPost.reactions[reaction]++
       }
     },
+  },
+  // can be used to have the slice listen for actions that were defined elsewhere in the app
+  extraReducers: (builder) => {
+    // Clear out the list of posts whenever the user logs out
+    builder.addCase(userLoggedOut, (state) => {
+      return []
+    })
   },
 })
 

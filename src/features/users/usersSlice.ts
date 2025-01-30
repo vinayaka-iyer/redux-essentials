@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store'
+import { selectCurrentUsername } from '@/features/auth/authSlice'
 
 export interface User {
   id: string
@@ -24,3 +25,8 @@ export const selectAllUsers = (state: RootState) => state.users
 
 export const selectUserById = (state: RootState, userId: string | null) =>
   state.users.find((user) => user.id === userId)
+
+export const selectCurrentUser = (state: RootState) => {
+  const currentUsername = selectCurrentUsername(state)
+  return selectUserById(state, currentUsername)
+}

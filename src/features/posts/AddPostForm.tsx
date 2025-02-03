@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { nanoid } from '@reduxjs/toolkit'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 
-import { type Post, postAdded } from './postsSlice'
+import { addNewPost } from './postsSlice'
 import { selectAllUsers } from '@/features/users/usersSlice'
 import { selectCurrentUsername } from '../auth/authSlice'
 
@@ -18,19 +18,28 @@ interface AddPostFormElements extends HTMLFormElement {
 }
 
 export const AddPostForm = () => {
+  const [addRequestStatus, setAddRequestStatus] = useState<'idle' | 'pending'>('idle')
   const dispatch = useAppDispatch()
   const userId = useAppSelector(selectCurrentUsername)!
 
-  const handleSubmit = (e: React.FormEvent<AddPostFormElements>) => {
+  const handleSubmit = async (e: React.FormEvent<AddPostFormElements>) => {
     e.preventDefault()
 
     const { elements } = e.currentTarget
     const title = elements.postTitle.value
     const content = elements.postContent.value
 
-    dispatch(postAdded(title, content, userId))
-
-    e.currentTarget.reset()
+    const form = e.currentTarget
+    try {
+      setAddRequestStatus('pending')
+      // .unwrap(): returns a new Promise that either has the payload or error
+      await dispatch(addNewPost({ title, content, user: userId })).unwrap()
+      form.reset()
+    } catch (err) {
+      console.error('Failed to save the post: ', err)
+    } finally {
+      setAddRequestStatus('idle')
+    }
   }
 
   return (

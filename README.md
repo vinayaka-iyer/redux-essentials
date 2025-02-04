@@ -39,3 +39,15 @@
   - Many slice reducers can each do their own state updates in response to the same action
   - `createSlice.extraReducers` lets slices listen for actions that were defined outside of the slice
   - State values can be reset by returning a new value from the case reducer as a replacement, instead of mutating the existing state
+
+- Redux uses plugins called "middleware" to enable async logic
+  - The standard async middleware is called `redux-thunk`, which is included in Redux Toolkit
+  - Thunk functions receive `dispatch` and `getState` as arguments, and can use those as part of async logic
+- You can dispatch additional actions to help track the loading status of an API call
+  - The typical pattern is dispatching a "pending" action before the call, then either a "success" containing the data or a "failure" action containing the error
+  - Loading state should usually be stored as an enum, like `'idle' | 'pending' | 'succeeded' | 'rejected'`
+- Redux Toolkit has a `createAsyncThunk` API that dispatches these actions for you
+  - `createAsyncThunk` accepts a "payload creator" callback that should return a Promise, and generates `pending/fulfilled/rejected` action types automatically
+  - Generated action creators like `fetchPosts` dispatch those actions based on the Promise you return
+  - You can listen for these action types in `createSlice` using the `extraReducers` field, and update the state in reducers based on those actions.
+  - `createAsyncThunk` has a `condition` option that can be used to cancel a request based on the Redux state

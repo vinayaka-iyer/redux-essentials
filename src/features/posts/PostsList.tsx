@@ -36,6 +36,8 @@ export const PostsList = () => {
     content = <div>{postsError}</div>
   }
 
+  // Suggestion: we could wrap the <PostExcerpt> component in React.memo(), which will ensure that
+  // the component inside of it only re-renders if the props have actually changed
   function PostExcerpt({ post }: PostExcerptProps) {
     return (
       <article className="post-excerpt" key={post.id}>

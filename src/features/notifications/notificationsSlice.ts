@@ -1,5 +1,5 @@
 import { createAppAsyncThunk } from '@/app/withTypes'
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createEntityAdapter } from '@reduxjs/toolkit'
 import { client } from '@/api/client'
 
 import type { RootState } from '@/app/store'
@@ -24,14 +24,18 @@ export const fetchNotifications = createAppAsyncThunk('notifications/fetchNotifi
   return response.data
 })
 
-const initialState: ClientNotification[] = []
+const notificationsAdapter = createEntityAdapter<ClientNotification>({
+  sortComparer: (a, b) => b.date.localeCompare(a.date),
+})
+
+const initialState = notificationsAdapter.getInitialState()
 
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState,
   reducers: {
     allNotificationsRead(state) {
-      state.forEach((notification) => {
+      Object.values(state.entities).forEach((notification) => {
         notification.read = true
       })
     },
@@ -46,13 +50,11 @@ const notificationsSlice = createSlice({
       }))
 
       // any notification we've read is no longer new
-      state.forEach((notification) => {
+      Object.values(state.entities).forEach((notification) => {
         notification.isNew = !notification.read
       })
 
-      state.push(...notificationsWithMetadata)
-      // sort with newest first
-      state.sort((a, b) => b.date.localeCompare(a.date))
+      notificationsAdapter.upsertMany(state, notificationsWithMetadata)
     })
   },
 })
@@ -61,10 +63,12 @@ export const { allNotificationsRead } = notificationsSlice.actions
 
 export default notificationsSlice.reducer
 
+export const { selectAll: selectAllNotifications } = notificationsAdapter.getSelectors(
+  (state: RootState) => state.notifications,
+)
+
 export const selectUnreadNotificationsCount = (state: RootState) => {
   const allNotifications = selectAllNotifications(state)
   const unreadNotifications = allNotifications.filter((notification) => !notification.read)
   return unreadNotifications.length
 }
-
-export const selectAllNotifications = (state: RootState) => state.notifications

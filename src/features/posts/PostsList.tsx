@@ -1,6 +1,13 @@
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { Link } from 'react-router-dom'
-import { fetchPosts, Post, selectAllPosts, selectPostsError, selectPostsStatus } from './postsSlice'
+import {
+  fetchPosts,
+  selectAllPosts,
+  selectPostIds,
+  selectPostById,
+  selectPostsError,
+  selectPostsStatus,
+} from './postsSlice'
 import PostAuthor from './PostAuthor'
 import { TimeAgo } from '@/components/TimeAgo'
 import { ReactionButton } from './ReactionButton'
@@ -8,7 +15,7 @@ import React, { useEffect } from 'react'
 import { Spinner } from '@/components/Spinner'
 
 interface PostExcerptProps {
-  post: Post
+  postId: string
 }
 
 export const PostsList = () => {
@@ -16,6 +23,8 @@ export const PostsList = () => {
   const posts = useAppSelector(selectAllPosts)
   const postsStatus = useAppSelector(selectPostsStatus)
   const postsError = useAppSelector(selectPostsError)
+
+  const orderedPostIds = useAppSelector(selectPostIds)
 
   useEffect(() => {
     if (postsStatus === 'idle') {
@@ -28,17 +37,15 @@ export const PostsList = () => {
   if (postsStatus === 'pending') {
     content = <Spinner text="Loading..." />
   } else if (postsStatus === 'succeeded') {
-    // sort posts in reverse chronological order by datetime string
-    const orderedPosts = posts.slice().sort((a, b) => b.date.localeCompare(a.date))
-
-    content = orderedPosts.map((post) => <PostExcerpt key={post.id} post={post} />)
+    content = orderedPostIds.map((postId) => <PostExcerpt key={postId} postId={postId} />)
   } else if (postsStatus === 'failed') {
     content = <div>{postsError}</div>
   }
 
   // Suggestion: we could wrap the <PostExcerpt> component in React.memo(), which will ensure that
   // the component inside of it only re-renders if the props have actually changed
-  function PostExcerpt({ post }: PostExcerptProps) {
+  function PostExcerpt({ postId }: PostExcerptProps) {
+    const post = useAppSelector((state) => selectPostById(state, postId))
     return (
       <article className="post-excerpt" key={post.id}>
         <h3>

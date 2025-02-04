@@ -1,4 +1,4 @@
-import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createSelector, PayloadAction, createEntityAdapter, EntityState } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store'
 import { sub } from 'date-fns'
 import { logout } from '../auth/authSlice'
@@ -35,18 +35,22 @@ const initialReactions: Reactions = {
   rocket: 0,
   eyes: 0,
 }
-const initialState: PostsState = {
-  posts: [],
-  status: 'idle',
-  error: null,
-}
 
-// posts fetch states
-interface PostsState {
-  posts: Post[]
+// Normalizing posts state to {ids: [], entities: {} ...otherfields}
+interface PostsState extends EntityState<Post, string> {
   status: 'idle' | 'pending' | 'succeeded' | 'failed'
   error: string | null
 }
+
+const postsAdapter = createEntityAdapter<Post>({
+  // sort in descending date order
+  sortComparer: (a, b) => b.date.localeCompare(a.date),
+})
+
+const initialState: PostsState = postsAdapter.getInitialState({
+  status: 'idle',
+  error: null,
+})
 
 // createAsyncThunk: prefix string, payload creator callback function containing data
 export const fetchPosts = createAppAsyncThunk(
@@ -78,15 +82,12 @@ const postsSlice = createSlice({
   reducers: {
     postUpdated(state, action: PayloadAction<PostUpdate>) {
       const { id, title, content } = action.payload
-      const existingPost = state.posts.find((post) => post.id === id)
-      if (existingPost) {
-        existingPost.title = title
-        existingPost.content = content
-      }
+      // .updateOne method take an object {id, changes}
+      postsAdapter.updateOne(state, { id, changes: { title, content } })
     },
     reactionAdded(state, action: PayloadAction<{ postId: string; reaction: ReactionName }>) {
       const { postId, reaction } = action.payload
-      const existingPost = state.posts.find((post) => post.id === postId)
+      const existingPost = state.entities[postId]
       if (existingPost) {
         existingPost.reactions[reaction]++
       }
@@ -104,15 +105,13 @@ const postsSlice = createSlice({
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.status = 'succeeded'
-        state.posts.push(...action.payload)
+        postsAdapter.setAll(state, action.payload)
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.error.message ?? 'Unknown Error'
       })
-      .addCase(addNewPost.fulfilled, (state, action) => {
-        state.posts.push(action.payload)
-      })
+      .addCase(addNewPost.fulfilled, postsAdapter.addOne)
   },
 })
 
@@ -121,28 +120,20 @@ export const { postUpdated, reactionAdded } = postsSlice.actions
 
 export default postsSlice.reducer
 
-// Extracting Post Selectors
-export const selectAllPosts = (state: RootState) => state.posts.posts
-
-export const selectPostById = (state: RootState, postId: string) => state.posts.posts.find((post) => post.id === postId)
+// Export the customized selectors using getSelectors
+export const {
+  selectAll: selectAllPosts,
+  selectById: selectPostById,
+  selectIds: selectPostIds,
+  // Pass in a selector that returns the posts slice of state
+} = postsAdapter.getSelectors((state: RootState) => state.posts)
 
 // Memoized Selector
 export const selectPostsByUser = createSelector(
-  // Pass in one or more "input selectors"
-  [
-    // we can pass in an existing selector function that reads something from the root `state` and returns it
-    selectAllPosts,
-    // and another function that extracts one of the arguments and passes that onward
-    (state: RootState, userId: string) => userId,
-  ],
+  [selectAllPosts, (state: RootState, userId: string) => userId],
   // the output function gets those values as its arguments & will run when either input value changes
   (posts, userId) => posts.filter((post) => post.user === userId),
 )
-
-// export const selectPostsByUser = (state: RootState, userId: string) => {
-//   const allPosts = selectAllPosts(state)
-//   return allPosts.filter((post) => post.user === userId)   // ❌ WRONG - this _always_ creates a new array reference!
-// }
 
 export const selectPostsStatus = (state: RootState) => state.posts.status
 export const selectPostsError = (state: RootState) => state.posts.error

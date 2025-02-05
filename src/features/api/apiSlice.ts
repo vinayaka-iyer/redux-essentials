@@ -1,6 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-
-import type { Post } from '../posts/postsSlice'
+import type { Post, NewPost } from '../posts/postsSlice'
 export type { Post }
 
 export const apiSlice = createApi({
@@ -12,7 +11,17 @@ export const apiSlice = createApi({
       // a query operation that returns Post[] array
       query: () => '/posts',
     }),
+    getPost: builder.query<Post, string>({
+      query: (postId) => `/posts/${postId}`,
+    }),
+    addNewPost: builder.mutation<Post, NewPost>({
+      query: (initialPost) => ({
+        url: '/posts',
+        method: 'POST',
+        body: initialPost,
+      }),
+    }),
   }),
 })
 
-export const { useGetPostsQuery } = apiSlice
+export const { useGetPostsQuery, useGetPostQuery, useAddNewPostMutation } = apiSlice

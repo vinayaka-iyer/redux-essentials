@@ -5,25 +5,23 @@ import PostAuthor from './PostAuthor'
 import { TimeAgo } from '@/components/TimeAgo'
 import { ReactionButton } from './ReactionButton'
 import { selectCurrentUsername } from '../auth/authSlice'
+import { useGetPostQuery } from '../api/apiSlice'
+import { Spinner } from '@/components/Spinner'
 
 export const SinglePostPage = () => {
   const { postId } = useParams()
+  const currentUsername = useAppSelector(selectCurrentUsername)
 
-  const post = useAppSelector((state) => selectPostById(state, postId!))
-  const currentUsername = useAppSelector(selectCurrentUsername)!
+  const { data: post, isFetching, isSuccess } = useGetPostQuery(postId!)
 
-  if (!post) {
-    return (
-      <section>
-        <h2>Post not found!</h2>
-      </section>
-    )
-  }
+  let content: React.ReactNode
 
-  const canEdit = currentUsername === post.user
+  const canEdit = currentUsername === post?.user
 
-  return (
-    <section>
+  if (isFetching) {
+    content = <Spinner text="Loading..." />
+  } else if (isSuccess) {
+    content = (
       <article className="post">
         <h2>{post.title}</h2>
         <PostAuthor userId={post.user} />
@@ -36,6 +34,8 @@ export const SinglePostPage = () => {
           </Link>
         )}
       </article>
-    </section>
-  )
+    )
+  }
+
+  return <section>{content}</section>
 }

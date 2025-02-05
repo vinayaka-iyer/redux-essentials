@@ -1,42 +1,40 @@
-import { createSlice, createEntityAdapter } from '@reduxjs/toolkit'
+import { createSlice, createEntityAdapter, createSelector } from '@reduxjs/toolkit'
 import { RootState } from '@/app/store'
 import { selectCurrentUsername } from '@/features/auth/authSlice'
 import { client } from '@/api/client'
 import { createAppAsyncThunk } from '@/app/withTypes'
+import { apiSlice } from '../api/apiSlice'
 
 export interface User {
   id: string
   name: string
 }
 
-const usersAdapter = createEntityAdapter<User>()
+const emptyUsers: User[] = []
 
-const initialState = usersAdapter.getInitialState()
-
-export const fetchUsers = createAppAsyncThunk('users/fetchUsers', async () => {
-  const response = await client.get<User[]>('/fakeApi/users')
-  return response.data
+export const apiSliceWithUsers = apiSlice.injectEndpoints({
+  endpoints: (builder) => ({
+    getUsers: builder.query<User[], void>({
+      query: () => '/users',
+    }),
+  }),
 })
 
-const usersSlice = createSlice({
-  name: 'users',
-  initialState,
-  reducers: {},
-  extraReducers(builder) {
-    builder.addCase(fetchUsers.fulfilled, usersAdapter.setAll)
-  },
-})
+export const { useGetUsersQuery } = apiSliceWithUsers
 
-export default usersSlice.reducer
+export const selectUsersResult = apiSliceWithUsers.endpoints.getUsers.select()
 
-export const { selectAll: selectAllUsers, selectById: selectUserById } = usersAdapter.getSelectors(
-  (state: RootState) => state.users,
+export const selectAllUsers = createSelector(selectUsersResult, (usersResult) => usersResult?.data ?? emptyUsers)
+
+export const selectUserById = createSelector(
+  selectAllUsers,
+  (state: RootState, userId: string) => userId,
+  (users, userId) => users.find((user) => user.id === userId),
 )
 
 export const selectCurrentUser = (state: RootState) => {
   const currentUsername = selectCurrentUsername(state)
-  if (!currentUsername) {
-    return
+  if (currentUsername) {
+    return selectUserById(state, currentUsername)
   }
-  return selectUserById(state, currentUsername)
 }

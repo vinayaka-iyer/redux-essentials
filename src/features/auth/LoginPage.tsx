@@ -3,20 +3,20 @@ import { useNavigate } from 'react-router-dom'
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 import { selectAllUsers } from '@/features/users/usersSlice'
+
 import { login } from './authSlice'
 
 interface LoginPageFormFields extends HTMLFormControlsCollection {
   username: HTMLSelectElement
 }
-
 interface LoginPageFormElements extends HTMLFormElement {
   readonly elements: LoginPageFormFields
 }
 
 export const LoginPage = () => {
   const dispatch = useAppDispatch()
-  const navigate = useNavigate()
   const users = useAppSelector(selectAllUsers)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent<LoginPageFormElements>) => {
     e.preventDefault()

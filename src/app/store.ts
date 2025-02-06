@@ -1,6 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit'
 import type { Action, ThunkAction } from '@reduxjs/toolkit'
-import postsReducer from '@/features/posts/postsSlice'
 import authReducer from '@/features/auth/authSlice'
 import notificationsReducer from '@/features/notifications/notificationsSlice'
 import { listenerMiddleware } from './listenerMiddleware'
@@ -9,7 +8,6 @@ import { apiSlice } from '@/features/api/apiSlice'
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    posts: postsReducer,
     notifications: notificationsReducer,
     [apiSlice.reducerPath]: apiSlice.reducer,
   },
@@ -23,4 +21,4 @@ export type AppDispatch = typeof store.dispatch
 export type RootState = ReturnType<typeof store.getState>
 
 // Typing Handwritten Thunks
-// export type AppThunk = ThunkAction<void, RootState, unknown, Action>
+export type AppThunk = ThunkAction<void, RootState, unknown, Action>

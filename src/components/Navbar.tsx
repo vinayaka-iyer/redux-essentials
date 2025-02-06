@@ -4,11 +4,18 @@ import { selectCurrentUser } from '@/features/users/usersSlice'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { UserIcon } from './UserIcon'
-import { fetchNotifications, selectUnreadNotificationsCount } from '@/features/notifications/notificationsSlice'
+import {
+  fetchNotificationsWebsocket,
+  selectUnreadNotificationsCount,
+  useGetNotificationsQuery,
+} from '@/features/notifications/notificationsSlice'
 
 export const Navbar = () => {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectCurrentUser)
+
+  // trigger initial fetch and keep websocket open
+  useGetNotificationsQuery()
 
   const numUnreadNotifications = useAppSelector(selectUnreadNotificationsCount)
 
@@ -28,7 +35,7 @@ export const Navbar = () => {
     }
 
     const fetchNewNotifications = () => {
-      dispatch(fetchNotifications())
+      dispatch(fetchNotificationsWebsocket())
     }
 
     navContent = (

@@ -99,3 +99,19 @@
 - Mutation endpoints allow updating data on the server
   - Mutation hooks return a "trigger" function that sends an update request, plus loading status
   - The trigger function returns a Promise that can be "unwrapped" and awaited
+
+## RTK Query Advanced Patterns
+
+- Specific cache tags can be used for finer-grained cache invalidation
+  - Cache tags can be either `'Post'` or `{type: 'Post', id}`
+  - Endpoints can provide or invalidate cache tags based on results and arg cache keys
+- RTK Query's APIs are UI-agnostic and can be used outside of React
+  - Endpoint objects include functions for initiating requests, generating result selectors, and matching request action objects
+- Responses can be transformed in different ways as needed
+  - Endpoints can define a `transformResponse` callback to modify the data before caching
+  - Hooks can be given a `selectFromResult` option to extract/transform data
+  - Components can read an entire value and transform with `useMemo`
+- RTK Query has advanced options for manipulating cached data for better user experience
+  - The `onQueryStarted` lifecycle can be used for optimistic updates by updating cache immediately before a request returns
+  - The `onCacheEntryAdded` lifecycle can be used for streaming updates by updating cache over time based on server push connections
+  - RTKQ endpoints have a `matchFulfilled` matcher that can be used inside to listen for RTKQ endpoint actions and run additional logic, like updating a slice's state

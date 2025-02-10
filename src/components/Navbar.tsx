@@ -62,7 +62,7 @@ export const Navbar = () => {
   return (
     <nav>
       <section>
-        <h1>Redux Essentials Example</h1>
+        <h1>Tweeter using Redux</h1>
         {navContent}
       </section>
     </nav>
